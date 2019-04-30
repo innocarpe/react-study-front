@@ -84,13 +84,8 @@ module.exports = function(webpackEnv) {
         options: cssOptions,
       },
       {
-        // Options for PostCSS as we reference these options twice
-        // Adds vendor prefixing based on your specified browser support in
-        // package.json
         loader: require.resolve('postcss-loader'),
         options: {
-          // Necessary for external CSS imports to work
-          // https://github.com/facebook/create-react-app/issues/2677
           ident: 'postcss',
           plugins: () => [
             require('postcss-flexbugs-fixes'),
@@ -100,9 +95,6 @@ module.exports = function(webpackEnv) {
               },
               stage: 3,
             }),
-            // Adds PostCSS Normalize as the reset css with default options,
-            // so that it honors browserslist config in package.json
-            // which in turn let's users customize the target behavior as per their needs.
             postcssNormalize(),
           ],
           sourceMap: isEnvProduction && shouldUseSourceMap,
@@ -426,17 +418,15 @@ module.exports = function(webpackEnv) {
             {
               test: sassRegex,
               exclude: sassModuleRegex,
-              use: getStyleLoaders(
-                {
-                  importLoaders: 2,
-                  sourceMap: isEnvProduction && shouldUseSourceMap,
-                },
-                'sass-loader'
-              ),
-              // Don't consider CSS imports dead code even if the
-              // containing package claims to have no side effects.
-              // Remove this when webpack adds a warning or an error for this.
-              // See https://github.com/webpack/webpack/issues/6571
+              use: getStyleLoaders({
+                importLoaders: 2,
+                sourceMap: isEnvProduction && shouldUseSourceMap,
+              }).concat({
+                loader: require.resolve('sass-loader'),
+                options: {
+                  includePaths: [paths.globalStyles]
+                }
+              }),
               sideEffects: true,
             },
             // Adds support for CSS Modules, but using SASS
